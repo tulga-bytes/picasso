@@ -8,9 +8,11 @@ import {
 	type Connection,
 	Controls,
 	type Edge,
+	Handle,
 	MarkerType,
 	type Node,
 	type NodeProps,
+	Position,
 	ReactFlow,
 	addEdge,
 	useEdgesState,
@@ -27,38 +29,168 @@ export const Route = createFileRoute("/flow")({
 const initialNodes: Node[] = routeNodes;
 const initialEdges: Edge[] = routeEdges;
 
+// Route Node component - for existing route nodes with handles but no editing
+const RouteNode = ({ data }: NodeProps) => {
+	const borderColor = data.borderColor || "border-gray-300";
+	const textColor = data.textColor || "text-gray-800";
+
+	return (
+		<div
+			className={`px-3 py-2 shadow-md rounded-md bg-white border-2 ${borderColor} relative`}
+			style={{ width: 200, height: 80 }}
+		>
+			{/* Source handle (output) - solid blue circle */}
+			<Handle
+				type="source"
+				position={Position.Bottom}
+				id="bottom"
+				style={{
+					width: "12px",
+					height: "12px",
+					backgroundColor: "#3b82f6",
+					border: "1px solid white",
+					borderRadius: "50%",
+				}}
+			/>
+
+			{/* Target handle (input) - hollow green circle */}
+			<Handle
+				type="target"
+				position={Position.Top}
+				id="top"
+				style={{
+					width: "12px",
+					height: "12px",
+					backgroundColor: "transparent",
+					border: "1px solid #22c55e",
+					borderRadius: "50%",
+				}}
+			/>
+
+			<div>
+				<Label className={`text-sm ${textColor}`}>{data.label as string}</Label>
+			</div>
+		</div>
+	);
+};
+
+// Placeholder Demo Node - factory for creating new nodes
+const PlaceholderDemoNode = ({ data }: NodeProps) => {
+	const handleClick = () => {
+		// Dispatch custom event to create a new node
+		window.dispatchEvent(
+			new CustomEvent("createNewNode", {
+				detail: { sourceNodeId: "placeholder-demo" },
+			}),
+		);
+	};
+
+	return (
+		<div
+			className="px-3 py-2 shadow-md rounded-md bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-dashed border-purple-400 cursor-pointer relative hover:from-purple-200 hover:to-pink-200 transition-colors"
+			style={{ width: 200, height: 80 }}
+			onClick={handleClick}
+		>
+			{/* Source handle only - this is a factory node */}
+			<Handle
+				type="source"
+				position={Position.Bottom}
+				id="bottom"
+				style={{
+					width: "12px",
+					height: "12px",
+					backgroundColor: "#8b5cf6",
+					border: "1px solid white",
+					borderRadius: "50%",
+				}}
+			/>
+
+			<div className="flex flex-col items-center justify-center h-full">
+				<Label className="text-sm text-purple-700 font-medium">
+					+ Add Node
+				</Label>
+				<Label className="text-xs text-purple-500">Click to create</Label>
+			</div>
+		</div>
+	);
+};
+
+// Editable Node component - for new nodes with editing capability
 const EditableNode = ({ data, id }: NodeProps) => {
 	const [isEditing, setIsEditing] = useState(false);
-	const [label, setLabel] = useState(data.label as string);
+	const [title, setTitle] = useState((data.title as string) || "New Node");
+	const [description, setDescription] = useState(
+		(data.description as string) || "",
+	);
 
 	const handleSave = () => {
 		// Update the node data through a custom event or callback
 		window.dispatchEvent(
-			new CustomEvent("updateNodeLabel", {
-				detail: { nodeId: id, newLabel: label },
+			new CustomEvent("updateNodeData", {
+				detail: { nodeId: id, newTitle: title, newDescription: description },
 			}),
 		);
 		setIsEditing(false);
 	};
 
 	const handleCancel = () => {
-		setLabel(data.label as string);
+		setTitle((data.title as string) || "New Node");
+		setDescription((data.description as string) || "");
 		setIsEditing(false);
 	};
 
 	return (
 		<div
-			className="px-3 py-2 shadow-md rounded-md bg-white border-2 border-pink-300 cursor-pointer"
-			style={{ width: 200, height: 100 }}
+			className="px-3 py-2 shadow-md rounded-md bg-white border-2 border-pink-300 cursor-pointer relative"
+			style={{ width: 200, height: 120 }}
 			onDoubleClick={() => setIsEditing(true)}
 		>
+			{/* Source handle (output) - solid blue circle */}
+			<Handle
+				type="source"
+				position={Position.Bottom}
+				id="bottom"
+				style={{
+					width: "12px",
+					height: "12px",
+					backgroundColor: "#3b82f6",
+					border: "1px solid white",
+					borderRadius: "50%",
+				}}
+			/>
+
+			{/* Target handle (input) - hollow green circle */}
+			<Handle
+				type="target"
+				position={Position.Top}
+				id="top"
+				style={{
+					width: "12px",
+					height: "12px",
+					backgroundColor: "transparent",
+					border: "1px solid #22c55e",
+					borderRadius: "50%",
+				}}
+			/>
+
 			{isEditing ? (
 				<div className="flex flex-col gap-2">
 					<Input
-						value={label}
-						onChange={(e) => setLabel(e.target.value)}
-						className="text-sm"
+						value={title}
+						onChange={(e) => setTitle(e.target.value)}
+						className="text-sm font-medium"
+						placeholder="Node title"
 						autoFocus
+						onKeyDown={(e) => {
+							if (e.key === "Enter") handleSave();
+							if (e.key === "Escape") handleCancel();
+						}}
+					/>
+					<Input
+						value={description}
+						onChange={(e) => setDescription(e.target.value)}
+						className="text-xs"
+						placeholder="Description (optional)"
 						onKeyDown={(e) => {
 							if (e.key === "Enter") handleSave();
 							if (e.key === "Escape") handleCancel();
@@ -75,8 +207,11 @@ const EditableNode = ({ data, id }: NodeProps) => {
 				</div>
 			) : (
 				<div>
-					<Label className="text-sm">{label}</Label>
-					<div className="text-xs text-gray-500 mt-1">Double-click to edit</div>
+					<Label className="text-sm font-medium">{title}</Label>
+					{description && (
+						<div className="text-xs text-gray-600 mt-1">{description}</div>
+					)}
+					<div className="text-xs text-gray-400 mt-1">Double-click to edit</div>
 				</div>
 			)}
 		</div>
@@ -84,6 +219,8 @@ const EditableNode = ({ data, id }: NodeProps) => {
 };
 
 const nodeTypes = {
+	route: RouteNode,
+	placeholder: PlaceholderDemoNode,
 	new: EditableNode,
 };
 
@@ -100,7 +237,7 @@ function RouteComponent() {
 
 	const onConnect = useCallback(
 		(params: Connection) => {
-			const newEdge = {
+			const newEdge: Edge = {
 				...params,
 				id: `new-edge-${edgeCounter}`,
 			};
@@ -111,14 +248,22 @@ function RouteComponent() {
 		[setEdges, edgeCounter],
 	);
 
-	// Listen for node label updates
+	// Listen for node data updates
 	useEffect(() => {
-		const handleUpdateNodeLabel = (event: CustomEvent) => {
-			const { nodeId, newLabel } = event.detail;
+		const handleUpdateNodeData = (event: CustomEvent) => {
+			const { nodeId, newTitle, newDescription } = event.detail;
 			setNodes((nds) =>
 				nds.map((node) =>
 					node.id === nodeId
-						? { ...node, data: { ...node.data, label: newLabel } }
+						? {
+								...node,
+								data: {
+									...node.data,
+									title: newTitle,
+									description: newDescription,
+									label: newTitle, // Keep label for compatibility
+								},
+							}
 						: node,
 				),
 			);
@@ -126,17 +271,61 @@ function RouteComponent() {
 			setNewNodes((nds) =>
 				nds.map((node) =>
 					node.id === nodeId
-						? { ...node, data: { ...node.data, label: newLabel } }
+						? {
+								...node,
+								data: {
+									...node.data,
+									title: newTitle,
+									description: newDescription,
+									label: newTitle,
+								},
+							}
 						: node,
 				),
 			);
 		};
 
-		window.addEventListener("updateNodeLabel", handleUpdateNodeLabel as EventListener);
-		return () => {
-			window.removeEventListener("updateNodeLabel", handleUpdateNodeLabel as EventListener);
+		const handleCreateNewNode = () => {
+			const newNode: Node = {
+				id: `new-node-${nodeCounter}`,
+				position: {
+					x: Math.random() * 400 + 200,
+					y: Math.random() * 400 + 200,
+				},
+				type: "new",
+				data: {
+					title: `New Node ${nodeCounter}`,
+					description: "",
+					label: `New Node ${nodeCounter}`, // Keep for compatibility
+					borderColor: "border-pink-300",
+					textColor: "text-pink-800",
+				},
+			};
+			setNodes((nds) => [...nds, newNode]);
+			setNewNodes((prev) => [...prev, newNode]);
+			setNodeCounter((prev) => prev + 1);
 		};
-	}, [setNodes]);
+
+		window.addEventListener(
+			"updateNodeData",
+			handleUpdateNodeData as EventListener,
+		);
+		window.addEventListener(
+			"createNewNode",
+			handleCreateNewNode as EventListener,
+		);
+
+		return () => {
+			window.removeEventListener(
+				"updateNodeData",
+				handleUpdateNodeData as EventListener,
+			);
+			window.removeEventListener(
+				"createNewNode",
+				handleCreateNewNode as EventListener,
+			);
+		};
+	}, [setNodes, nodeCounter]);
 
 	const addNewNode = () => {
 		const newNode: Node = {
@@ -144,7 +333,9 @@ function RouteComponent() {
 			position: { x: Math.random() * 400 + 100, y: Math.random() * 400 + 100 },
 			type: "new",
 			data: {
-				label: `New Node ${nodeCounter}`,
+				title: `New Node ${nodeCounter}`,
+				description: "",
+				label: `New Node ${nodeCounter}`, // Keep for compatibility
 				borderColor: "border-pink-300",
 				textColor: "text-pink-800",
 			},
@@ -183,6 +374,54 @@ function RouteComponent() {
 		setEdgeCounter(1);
 	};
 
+	const saveChangesToFile = async () => {
+		if (newNodes.length === 0 && newEdges.length === 0) return;
+
+		const changes = {
+			newNodes: newNodes.map((node) => ({
+				id: node.id,
+				type: node.type,
+				position: node.position,
+				data: node.data,
+			})),
+			newEdges: newEdges.map((edge) => ({
+				id: edge.id,
+				source: edge.source,
+				target: edge.target,
+				type: edge.type,
+			})),
+			timestamp: new Date().toISOString(),
+			totalNewNodes: newNodes.length,
+			totalNewEdges: newEdges.length,
+		};
+
+		try {
+			// Create the JSON content
+			const jsonContent = JSON.stringify(changes, null, 2);
+
+			// Create a blob and download link
+			const blob = new Blob([jsonContent], { type: "application/json" });
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = `flow-changes-${Date.now()}.json`;
+
+			// Trigger download
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+
+			// Reset the new nodes/edges after saving
+			setNewNodes([]);
+			setNewEdges([]);
+
+			console.log("Changes saved successfully!");
+		} catch (error) {
+			console.error("Error saving changes:", error);
+		}
+	};
+
 	// Get all node IDs for the edge creation dropdowns
 	const allNodeIds = nodes.map((node) => node.id);
 
@@ -210,6 +449,17 @@ function RouteComponent() {
 					Project Structure
 				</Button>
 				<Button onClick={addNewNode}>Add Node</Button>
+				<Button
+					onClick={saveChangesToFile}
+					disabled={newNodes.length === 0 && newEdges.length === 0}
+					variant={
+						newNodes.length > 0 || newEdges.length > 0 ? "default" : "outline"
+					}
+				>
+					Apply Changes{" "}
+					{(newNodes.length > 0 || newEdges.length > 0) &&
+						`(${newNodes.length + newEdges.length})`}
+				</Button>
 				<div className="flex gap-1 items-center">
 					<select
 						value={sourceNodeId}
@@ -239,7 +489,9 @@ function RouteComponent() {
 					<Button
 						size="sm"
 						onClick={addNewEdge}
-						disabled={!sourceNodeId || !targetNodeId || sourceNodeId === targetNodeId}
+						disabled={
+							!sourceNodeId || !targetNodeId || sourceNodeId === targetNodeId
+						}
 					>
 						Add Edge
 					</Button>
@@ -254,7 +506,7 @@ function RouteComponent() {
 			<div
 				className={`${showDebugView ? "grid grid-cols-2" : "grid grid-cols-1"} flex-1 min-h-0`}
 			>
-				<div className="border-2 m-2 h-full">
+				<div className="border-2 m-2 h-full relative">
 					<ReactFlow
 						nodes={nodes}
 						edges={edgesCustomized}
@@ -267,6 +519,35 @@ function RouteComponent() {
 						<Background />
 						<Controls />
 					</ReactFlow>
+
+					{/* Fixed Toolbox */}
+					<div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm border border-gray-200 rounded-lg shadow-lg p-3 z-10">
+						<div className="text-xs font-medium text-gray-600 mb-2">
+							Toolbox
+						</div>
+						<div className="flex flex-col gap-2">
+							{/* Placeholder Demo Node in Toolbox */}
+							<div
+								className="px-3 py-2 shadow-sm rounded-md bg-gradient-to-br from-purple-100 to-pink-100 border border-dashed border-purple-400 cursor-pointer hover:from-purple-200 hover:to-pink-200 transition-colors"
+								style={{ width: 140, height: 60 }}
+								onClick={() => {
+									window.dispatchEvent(new CustomEvent("createNewNode"));
+								}}
+							>
+								<div className="flex flex-col items-center justify-center h-full">
+									<div className="text-xs font-medium text-purple-700">
+										+ Add Node
+									</div>
+									<div className="text-xs text-purple-500">Click to create</div>
+								</div>
+							</div>
+
+							{/* Placeholder for future tools */}
+							<div className="text-xs text-gray-400 text-center py-1">
+								More tools coming...
+							</div>
+						</div>
+					</div>
 				</div>
 
 				{showDebugView && (
@@ -283,7 +564,8 @@ function RouteComponent() {
 									<div className="max-h-48 overflow-auto">
 										<JsonView
 											value={nodes.filter(
-												(node) => !newNodes.some((newNode) => newNode.id === node.id),
+												(node) =>
+													!newNodes.some((newNode) => newNode.id === node.id),
 											)}
 										/>
 									</div>
@@ -305,7 +587,8 @@ function RouteComponent() {
 									<div className="max-h-48 overflow-auto">
 										<JsonView
 											value={edges.filter(
-												(edge) => !newEdges.some((newEdge) => newEdge.id === edge.id),
+												(edge) =>
+													!newEdges.some((newEdge) => newEdge.id === edge.id),
 											)}
 										/>
 									</div>
@@ -325,8 +608,12 @@ function RouteComponent() {
 							<div className="text-sm space-y-1">
 								<div>Total Nodes: {nodes.length}</div>
 								<div>Total Edges: {edges.length}</div>
-								<div className="text-pink-600">New Nodes Added: {newNodes.length}</div>
-								<div className="text-pink-600">New Edges Added: {newEdges.length}</div>
+								<div className="text-pink-600">
+									New Nodes Added: {newNodes.length}
+								</div>
+								<div className="text-pink-600">
+									New Edges Added: {newEdges.length}
+								</div>
 							</div>
 						</div>
 					</div>
