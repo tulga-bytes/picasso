@@ -9,7 +9,6 @@ import {
 	Controls,
 	type Edge,
 	Handle,
-	MarkerType,
 	type Node,
 	type NodeProps,
 	Position,
@@ -54,11 +53,11 @@ const RouteNode = ({ data }: NodeProps) => {
 				<div className="font-semibold text-sm text-gray-800">
 					{data.label as string}
 				</div>
-				{data.description && (
+				{data.description ? (
 					<div className="text-xs text-gray-600 leading-relaxed">
 						{data.description as string}
 					</div>
-				)}
+				) : null}
 			</div>
 		</div>
 	);
