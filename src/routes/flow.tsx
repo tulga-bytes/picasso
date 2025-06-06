@@ -31,44 +31,34 @@ const initialEdges: Edge[] = routeEdges;
 
 // Route Node component - for existing route nodes with handles but no editing
 const RouteNode = ({ data }: NodeProps) => {
-	const borderColor = data.borderColor || "border-gray-300";
-	const textColor = data.textColor || "text-gray-800";
-
 	return (
 		<div
-			className={`px-3 py-2 shadow-md rounded-md bg-white border-2 ${borderColor} relative`}
-			style={{ width: 200, height: 80 }}
+			className="px-4 py-3 shadow-md rounded-md bg-white border border-gray-300 relative"
+			style={{ minWidth: 220, minHeight: 100 }}
 		>
-			{/* Source handle (output) - solid blue circle */}
+			{/* Source handle (output) */}
 			<Handle
 				type="source"
 				position={Position.Bottom}
 				id="bottom"
-				style={{
-					width: "12px",
-					height: "12px",
-					backgroundColor: "#3b82f6",
-					border: "1px solid white",
-					borderRadius: "50%",
-				}}
 			/>
 
-			{/* Target handle (input) - hollow green circle */}
+			{/* Target handle (input) */}
 			<Handle
 				type="target"
 				position={Position.Top}
 				id="top"
-				style={{
-					width: "12px",
-					height: "12px",
-					backgroundColor: "transparent",
-					border: "1px solid #22c55e",
-					borderRadius: "50%",
-				}}
 			/>
 
-			<div>
-				<Label className={`text-sm ${textColor}`}>{data.label as string}</Label>
+			<div className="space-y-2">
+				<div className="font-semibold text-sm text-gray-800">
+					{data.label as string}
+				</div>
+				{data.description && (
+					<div className="text-xs text-gray-600 leading-relaxed">
+						{data.description as string}
+					</div>
+				)}
 			</div>
 		</div>
 	);
@@ -87,8 +77,7 @@ const PlaceholderDemoNode = ({ data }: NodeProps) => {
 
 	return (
 		<div
-			className="px-3 py-2 shadow-md rounded-md bg-gradient-to-br from-purple-100 to-pink-100 border-2 border-dashed border-purple-400 cursor-pointer relative hover:from-purple-200 hover:to-pink-200 transition-colors"
-			style={{ width: 200, height: 80 }}
+			className="px-3 py-2 shadow-md rounded-md bg-gray-50 border border-dashed border-gray-400 cursor-pointer relative hover:bg-gray-100 transition-colors"
 			onClick={handleClick}
 		>
 			{/* Source handle only - this is a factory node */}
@@ -96,20 +85,13 @@ const PlaceholderDemoNode = ({ data }: NodeProps) => {
 				type="source"
 				position={Position.Bottom}
 				id="bottom"
-				style={{
-					width: "12px",
-					height: "12px",
-					backgroundColor: "#8b5cf6",
-					border: "1px solid white",
-					borderRadius: "50%",
-				}}
 			/>
 
 			<div className="flex flex-col items-center justify-center h-full">
-				<Label className="text-sm text-purple-700 font-medium">
+				<Label className="text-sm text-gray-700 font-medium">
 					+ Add Node
 				</Label>
-				<Label className="text-xs text-purple-500">Click to create</Label>
+				<Label className="text-xs text-gray-500">Click to create</Label>
 			</div>
 		</div>
 	);
@@ -141,36 +123,21 @@ const EditableNode = ({ data, id }: NodeProps) => {
 
 	return (
 		<div
-			className="px-3 py-2 shadow-md rounded-md bg-white border-2 border-pink-300 cursor-pointer relative"
-			style={{ width: 200, height: 120 }}
+			className="px-3 py-2 shadow-md rounded-md bg-white border border-gray-400 cursor-pointer relative"
 			onDoubleClick={() => setIsEditing(true)}
 		>
-			{/* Source handle (output) - solid blue circle */}
+			{/* Source handle (output) */}
 			<Handle
 				type="source"
 				position={Position.Bottom}
 				id="bottom"
-				style={{
-					width: "12px",
-					height: "12px",
-					backgroundColor: "#3b82f6",
-					border: "1px solid white",
-					borderRadius: "50%",
-				}}
 			/>
 
-			{/* Target handle (input) - hollow green circle */}
+			{/* Target handle (input) */}
 			<Handle
 				type="target"
 				position={Position.Top}
 				id="top"
-				style={{
-					width: "12px",
-					height: "12px",
-					backgroundColor: "transparent",
-					border: "1px solid #22c55e",
-					borderRadius: "50%",
-				}}
 			/>
 
 			{isEditing ? (
@@ -297,8 +264,6 @@ function RouteComponent() {
 					title: `New Node ${nodeCounter}`,
 					description: "",
 					label: `New Node ${nodeCounter}`, // Keep for compatibility
-					borderColor: "border-pink-300",
-					textColor: "text-pink-800",
 				},
 			};
 			setNodes((nds) => [...nds, newNode]);
@@ -336,8 +301,6 @@ function RouteComponent() {
 				title: `New Node ${nodeCounter}`,
 				description: "",
 				label: `New Node ${nodeCounter}`, // Keep for compatibility
-				borderColor: "border-pink-300",
-				textColor: "text-pink-800",
 			},
 		};
 		setNodes((nds) => [...nds, newNode]);
@@ -424,21 +387,6 @@ function RouteComponent() {
 
 	// Get all node IDs for the edge creation dropdowns
 	const allNodeIds = nodes.map((node) => node.id);
-
-	const edgesCustomized = edges.map((edge) => ({
-		...edge,
-		markerEnd: {
-			type: MarkerType.Arrow,
-			width: 10,
-			height: 10,
-			color: "#FF0072",
-			strokeWidth: 2,
-		},
-		style: {
-			strokeWidth: 2,
-			stroke: "#FF0072",
-		},
-	}));
 	return (
 		<div className="p-1 flex flex-col" style={{ height: "calc(100vh - 50px)" }}>
 			<div className="flex gap-2 flex-shrink-0 flex-wrap">
@@ -509,7 +457,7 @@ function RouteComponent() {
 				<div className="border-2 m-2 h-full relative">
 					<ReactFlow
 						nodes={nodes}
-						edges={edgesCustomized}
+						edges={edges}
 						onNodesChange={onNodesChange}
 						onEdgesChange={onEdgesChange}
 						onConnect={onConnect}
@@ -528,17 +476,17 @@ function RouteComponent() {
 						<div className="flex flex-col gap-2">
 							{/* Placeholder Demo Node in Toolbox */}
 							<div
-								className="px-3 py-2 shadow-sm rounded-md bg-gradient-to-br from-purple-100 to-pink-100 border border-dashed border-purple-400 cursor-pointer hover:from-purple-200 hover:to-pink-200 transition-colors"
+								className="px-3 py-2 shadow-sm rounded-md bg-gray-50 border border-dashed border-gray-400 cursor-pointer hover:bg-gray-100 transition-colors"
 								style={{ width: 140, height: 60 }}
 								onClick={() => {
 									window.dispatchEvent(new CustomEvent("createNewNode"));
 								}}
 							>
 								<div className="flex flex-col items-center justify-center h-full">
-									<div className="text-xs font-medium text-purple-700">
+									<div className="text-xs font-medium text-gray-700">
 										+ Add Node
 									</div>
-									<div className="text-xs text-purple-500">Click to create</div>
+									<div className="text-xs text-gray-500">Click to create</div>
 								</div>
 							</div>
 

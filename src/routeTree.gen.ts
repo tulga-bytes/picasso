@@ -11,6 +11,7 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as MacbookImport } from './routes/macbook'
 import { Route as FlowImport } from './routes/flow'
 import { Route as FifthImport } from './routes/fifth'
 import { Route as IndexImport } from './routes/index'
@@ -18,6 +19,12 @@ import { Route as DemoTanstackQueryImport } from './routes/demo.tanstack-query'
 import { Route as DemoStoreImport } from './routes/demo.store'
 
 // Create/Update Routes
+
+const MacbookRoute = MacbookImport.update({
+  id: '/macbook',
+  path: '/macbook',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const FlowRoute = FlowImport.update({
   id: '/flow',
@@ -74,6 +81,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FlowImport
       parentRoute: typeof rootRoute
     }
+    '/macbook': {
+      id: '/macbook'
+      path: '/macbook'
+      fullPath: '/macbook'
+      preLoaderRoute: typeof MacbookImport
+      parentRoute: typeof rootRoute
+    }
     '/demo/store': {
       id: '/demo/store'
       path: '/demo/store'
@@ -97,6 +111,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/fifth': typeof FifthRoute
   '/flow': typeof FlowRoute
+  '/macbook': typeof MacbookRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
 }
@@ -105,6 +120,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/fifth': typeof FifthRoute
   '/flow': typeof FlowRoute
+  '/macbook': typeof MacbookRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
 }
@@ -114,20 +130,34 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/fifth': typeof FifthRoute
   '/flow': typeof FlowRoute
+  '/macbook': typeof MacbookRoute
   '/demo/store': typeof DemoStoreRoute
   '/demo/tanstack-query': typeof DemoTanstackQueryRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/fifth' | '/flow' | '/demo/store' | '/demo/tanstack-query'
+  fullPaths:
+    | '/'
+    | '/fifth'
+    | '/flow'
+    | '/macbook'
+    | '/demo/store'
+    | '/demo/tanstack-query'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/fifth' | '/flow' | '/demo/store' | '/demo/tanstack-query'
+  to:
+    | '/'
+    | '/fifth'
+    | '/flow'
+    | '/macbook'
+    | '/demo/store'
+    | '/demo/tanstack-query'
   id:
     | '__root__'
     | '/'
     | '/fifth'
     | '/flow'
+    | '/macbook'
     | '/demo/store'
     | '/demo/tanstack-query'
   fileRoutesById: FileRoutesById
@@ -137,6 +167,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   FifthRoute: typeof FifthRoute
   FlowRoute: typeof FlowRoute
+  MacbookRoute: typeof MacbookRoute
   DemoStoreRoute: typeof DemoStoreRoute
   DemoTanstackQueryRoute: typeof DemoTanstackQueryRoute
 }
@@ -145,6 +176,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   FifthRoute: FifthRoute,
   FlowRoute: FlowRoute,
+  MacbookRoute: MacbookRoute,
   DemoStoreRoute: DemoStoreRoute,
   DemoTanstackQueryRoute: DemoTanstackQueryRoute,
 }
@@ -162,6 +194,7 @@ export const routeTree = rootRoute
         "/",
         "/fifth",
         "/flow",
+        "/macbook",
         "/demo/store",
         "/demo/tanstack-query"
       ]
@@ -174,6 +207,9 @@ export const routeTree = rootRoute
     },
     "/flow": {
       "filePath": "flow.tsx"
+    },
+    "/macbook": {
+      "filePath": "macbook.tsx"
     },
     "/demo/store": {
       "filePath": "demo.store.tsx"
